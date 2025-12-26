@@ -38,72 +38,89 @@ program
 
 const fetch = require("node-fetch");
 
-// TODO: Replace with your actual GitHub username/repo
-const REGISTRY_URL =
-  "https://raw.githubusercontent.com/tomiwadoesux/tomcs-registry/main";
-
+// COMMAND: add [component]
 program
   .command("add")
-  .description("Add a component to your project")
-  .argument("<component>", "the component to add")
-  .action(async (component) => {
-    // 1. Fetch the manifest
-    console.log(chalk.blue(`Fetching manifest from ${REGISTRY_URL}...`));
-    try {
-      const manifestUrl = `${REGISTRY_URL}/registry/index.json`;
-      const manifest = await fetch(manifestUrl).then((res) => {
-        if (!res.ok)
-          throw new Error(`Failed to fetch manifest: ${res.statusText}`);
-        return res.json();
-      });
+  .description("Add components to your project")
+  .argument("[component]", "the component to add")
+  .option("-a, --all", "add all available components from the registry")
+  .action(async (component, options) => {
+    // TODO: Replace with your actual GitHub username/repo if different
+    const REGISTRY_URL =
+      "https://raw.githubusercontent.com/tomiwadoesux/tomcs-registry/main";
 
-      if (!manifest.components[component]) {
+    try {
+      // 1. Fetch the manifest
+      console.log(chalk.blue(`Fetching manifest from ${REGISTRY_URL}...`));
+      const response = await fetch(`${REGISTRY_URL}/registry/index.json`);
+      if (!response.ok)
+        throw new Error(`Failed to fetch manifest: ${response.statusText}`);
+      const manifest = await response.json();
+
+      let componentsToInstall = [];
+
+      if (options.all) {
+        componentsToInstall = Object.keys(manifest.components);
         console.log(
-          chalk.red(`✘ Component "${component}" not found in registry.`)
+          chalk.blue(
+            `📦 Preparing to install all ${componentsToInstall.length} components...`
+          )
+        );
+      } else if (component) {
+        componentsToInstall = [component];
+      } else {
+        console.log(
+          chalk.yellow("Please specify a component name or use --all")
         );
         return;
       }
 
-      const componentDef = manifest.components[component];
-      const targetDir = path.join(process.cwd(), "src/components/ui");
-      await fs.ensureDir(targetDir);
+      // 2. Loop and Download
+      for (const item of componentsToInstall) {
+        const componentData = manifest.components[item];
 
-      // 2. Download the files
-      for (const file of componentDef.files) {
-        // file is like "components/button.tsx"
-        // We want to fetch it from registry/components/button.tsx
-        // The registry structure in the manifest assumes "components/button.tsx" is relative to "registry/" potentially?
-        // Let's assume the manifest "files" paths are relative to the registry root.
+        if (!componentData) {
+          console.log(
+            chalk.red(`✘ Component "${item}" not found in registry.`)
+          );
+          continue;
+        }
 
-        // Actually, looking at the user's setup:
-        // /registry
-        //   /components
-        //     button.tsx
-        //   index.json
-        // And the manifest has: "files": ["components/button.tsx"]
-        // So the URL should be REGISTRY_URL + "/registry/" + file path
+        for (const fileName of componentData.files) {
+          // The manifest "files" are relative to "registry/" in the repo structure we defined earlier
+          // e.g. "components/button.tsx"
+          // So we fetch from ${REGISTRY_URL}/registry/${fileName}
 
-        const fileUrl = `${REGISTRY_URL}/registry/${file}`;
-        console.log(chalk.cyan(`Downloading ${fileUrl}...`));
+          const fileUrl = `${REGISTRY_URL}/registry/${fileName}`;
+          // console.log(chalk.dim(`Downloading ${fileUrl}...`)); // Optional verbose logging
 
-        const sourceCode = await fetch(fileUrl).then((res) => {
-          if (!res.ok)
-            throw new Error(`Failed to fetch ${file}: ${res.statusText}`);
-          return res.text();
-        });
+          const sourceCode = await fetch(fileUrl).then((res) => {
+            if (!res.ok)
+              throw new Error(`Failed to fetch ${fileName}: ${res.statusText}`);
+            return res.text();
+          });
 
-        // 3. Write to local project
-        // We write to src/components/ui/filename.tsx
-        const fileName = path.basename(file);
-        const targetPath = path.join(targetDir, fileName);
+          // We want to save to src/components/ui/filename.tsx
+          // The fileName from manifest includes "components/" prefix likely?
+          // Let's check the manifest structure: "files": ["components/button.tsx"]
+          // We want to write to src/components/ui/button.tsx
+          // So we take the basename.
 
-        await fs.writeFile(targetPath, sourceCode);
-        console.log(
-          chalk.green(`✔ Added ${fileName} to src/components/ui/${fileName}`)
-        );
+          const baseName = path.basename(fileName);
+          const targetPath = path.join(
+            process.cwd(),
+            "src/components/ui",
+            baseName
+          );
+          await fs.outputFile(targetPath, sourceCode);
+        }
+
+        console.log(chalk.green(`✔ Added ${item}`));
       }
+
+      console.log(chalk.bold.magenta("\n🚀 tomcs design system is ready!"));
     } catch (error) {
-      console.log(chalk.red(`Error: ${error.message}`));
+      console.error(chalk.red("Error fetching from registry:"), error.message);
     }
   });
 
