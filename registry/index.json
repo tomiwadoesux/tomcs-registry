@@ -1,0 +1,24 @@
+{
+  "components": {
+    "button": {
+      "name": "Button",
+      "files": ["components/button.tsx"],
+      "dependencies": ["ink", "chalk"]
+    },
+    "shell": {
+      "name": "Shell",
+      "files": ["components/shell.tsx"],
+      "dependencies": ["ink"]
+    },
+    "card": {
+      "name": "Card",
+      "files": ["components/card.tsx"],
+      "dependencies": ["ink"]
+    },
+    "list": {
+      "name": "SelectableList",
+      "files": ["components/list.tsx"],
+      "dependencies": ["ink"]
+    }
+  }
+}
