@@ -19,6 +19,16 @@
       "name": "SelectableList",
       "files": ["components/list.tsx"],
       "dependencies": ["ink"]
+    },
+    "tabs": {
+      "name": "Tabs",
+      "files": ["components/tabs.tsx"],
+      "dependencies": ["ink"]
+    },
+    "badge": {
+      "name": "Badge",
+      "files": ["components/badge.tsx"],
+      "dependencies": ["ink"]
     }
   }
 }
