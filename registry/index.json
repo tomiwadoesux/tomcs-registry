@@ -29,6 +29,21 @@
       "name": "Badge",
       "files": ["components/badge.tsx"],
       "dependencies": ["ink"]
+    },
+    "banner": {
+      "name": "Banner",
+      "files": ["components/banner.tsx"],
+      "dependencies": ["ink", "figlet"]
+    },
+    "icon": {
+      "name": "Icon",
+      "files": ["components/icon.tsx"],
+      "dependencies": ["ink"]
+    },
+    "spinner": {
+      "name": "Spinner",
+      "files": ["components/spinner.tsx"],
+      "dependencies": ["ink"]
     }
   }
 }
