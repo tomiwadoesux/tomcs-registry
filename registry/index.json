@@ -2,7 +2,7 @@
   "components": {
     "button": {
       "name": "Button",
-      "files": ["components/button.tsx"],
+      "files": ["components/button.tsx", "hooks/use-focus.tsx"],
       "dependencies": ["ink", "chalk"]
     },
     "shell": {

@@ -16,6 +16,15 @@ In your project root, run the designer. This is where you will architect your UI
 npx tomcs
 ```
 
+### 2. Manual Installation (If needed)
+
+If you are setting up a project from scratch or encounter missing dependencies, run:
+
+```bash
+npm install ink react react-dom ink-gradient ink-big-text sharp groq-sdk dotenv tsx import-jsx figlet --save
+npm install -D @types/react @types/node @types/figlet typescript --save-dev
+```
+
 ### 2. Start Live Preview
 
 Open a **second terminal window** and run the preview. Because tomcs uses Hot-Module Sync, this window will re-render instantly every time you move a component in the designer.

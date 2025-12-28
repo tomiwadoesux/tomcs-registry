@@ -315,12 +315,12 @@ export const GeneratedUI = () => (
     console.log("Run the following command to install them:\n");
     console.log(
       chalk.cyan(
-        "npm install ink react react-dom ink-gradient ink-big-text sharp groq-sdk dotenv tsx import-jsx --save"
+        "npm install ink react react-dom ink-gradient ink-big-text sharp groq-sdk dotenv tsx import-jsx figlet --save"
       )
     );
     console.log(
       chalk.cyan(
-        "npm install -D @types/react @types/node typescript --save-dev"
+        "npm install -D @types/react @types/node @types/figlet typescript --save-dev"
       )
     );
 

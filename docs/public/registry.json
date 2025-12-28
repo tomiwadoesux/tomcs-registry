@@ -25,7 +25,7 @@
   },
   {
     "name": "banner",
-    "code": "import React from \"react\";\nimport { Text, Box } from \"ink\";\nimport figlet from \"figlet\";\n\nexport const Banner = ({\n  text,\n  font = \"Standard\",\n  color = \"white\",\n}: {\n  text: string;\n  font?: figlet.Fonts;\n  color?: string;\n}) => {\n  const bannerText = figlet.textSync(text, { font });\n\n  return (\n    <Box paddingY={1}>\n      <Text color={color}>{bannerText}</Text>\n    </Box>\n  );\n};\n",
+    "code": "import React from \"react\";\nimport { Text, Box } from \"ink\";\n\nexport const Banner = ({\n  text,\n  font = \"Standard\",\n  color = \"white\",\n}: {\n  text: string;\n  font?: any;\n  color?: string;\n}) => {\n  const [bannerText, setBannerText] = React.useState(text);\n\n  React.useEffect(() => {\n    const loadFiglet = async () => {\n      try {\n        const figlet = await import(\"figlet\");\n        // @ts-ignore\n        setBannerText(figlet.default.textSync(text, { font }));\n      } catch (e) {\n        setBannerText(text);\n      }\n    };\n    loadFiglet();\n  }, [text, font]);\n\n  return (\n    <Box paddingY={1}>\n      <Text color={color}>{bannerText}</Text>\n    </Box>\n  );\n};\n",
     "slug": "banner",
     "category": "Basic",
     "dependencies": ["figlet", "@types/figlet"]
