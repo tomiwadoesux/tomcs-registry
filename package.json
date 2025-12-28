@@ -1,23 +1,35 @@
 {
-  "name": "tomcs-app",
+  "name": "tomcs",
   "version": "1.0.0",
-  "description": "",
-  "main": "dist/app.js",
+  "description": "Visual IDE and AI Architect for Terminal User Interfaces",
+  "type": "module",
+  "main": "./dist/designer.js",
   "bin": {
-    "tomcs": "./dist/cli.js"
+    "tomcs": "./dist/designer.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "src/components/ui",
+    "src/hooks"
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "tsx src/app.tsx",
-    "build": "tsc"
+    "build": "tsc",
+    "prepublishOnly": "npm run build",
+    "dev": "tsx src/designer.tsx"
   },
-  "keywords": [],
+  "keywords": [
+    "tui",
+    "terminal",
+    "cli",
+    "ui",
+    "designer",
+    "ink",
+    "react"
+  ],
   "author": "",
   "license": "ISC",
-  "type": "module",
   "dependencies": {
     "dotenv": "^17.2.3",
     "figlet": "^1.9.4",

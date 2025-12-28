@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import React, { useState, useEffect } from "react";
 import { Box, Text, render, useInput, useStdout } from "ink";
 import { SelectableList } from "./components/ui/list.js";
@@ -735,7 +736,7 @@ export const GeneratedUI = () => (
             <Text bold color="blue">
               [I]
             </Text>
-            mage{" "}
+            mg→ASCII{" "}
             <Text bold color="blue">
               [B]
             </Text>
