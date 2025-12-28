@@ -7,9 +7,10 @@ const { spawn } = require("child_process");
 const fetch = require("node-fetch");
 
 // --- CUSTOM HELP ---
+// --- CUSTOM HELP ---
 const printHelp = () => {
   console.log(
-    chalk.bold.cyan("\n  tomcs - The shadcn for terminal user interfaces\n")
+    chalk.bold.cyan("\n  tomcs - The Terminal UNterface Desing Engine\n")
   );
 
   console.log(chalk.bold("  Usage:"));
@@ -26,12 +27,15 @@ const printHelp = () => {
       "add"
     )}        Add a component (e.g. npx tomcs add button)`
   );
-  console.log(
-    `    ${chalk.green(
-      "design"
-    )}     Launch the visual designer (or just run npx tomcs)`
-  );
+  console.log(`    ${chalk.green("designer")}   Launch the visual designer`);
   console.log(`    ${chalk.green("help")}       Show this help message\n`);
+
+  console.log(chalk.bold("  How to run the Designer:"));
+  console.log(
+    `    Run ${chalk.yellow("npx tomcs designer")} or simply ${chalk.yellow(
+      "npx tomcs"
+    )} in your project root.\n`
+  );
 
   console.log(chalk.bold("  Designer Controls:"));
   console.log(
@@ -90,36 +94,40 @@ if (
   process.exit(0);
 }
 
+const runDesigner = () => {
+  const designerPath = path.join(process.cwd(), "src", "designer.tsx");
+  if (fs.existsSync(designerPath)) {
+    console.log(chalk.cyan("🎨 Launching tomcs designer..."));
+    const child = spawn("npx", ["tsx", "src/designer.tsx"], {
+      stdio: "inherit",
+      env: { ...process.env, FORCE_COLOR: "true" },
+    });
+    child.on("exit", (code) => {
+      process.exit(code);
+    });
+  } else {
+    // If designer is missing, maybe they need to init?
+    console.log(chalk.yellow("⚠️  src/designer.tsx not found."));
+    console.log(`Run ${chalk.green("npx tomcs init")} to set up your project.`);
+  }
+};
+
 program
   .name("tomcs")
   .description("The shadcn for terminal user interfaces")
   .version("0.1.0")
-  .helpOption(false) // Disable default help option processing so we can handle it manually
-  .action((options) => {
-    // Check if user asked for help
-    if (
-      process.argv.includes("-h") ||
-      process.argv.includes("--help") ||
-      process.argv.includes("help")
-    ) {
-      printHelp();
-      return;
-    }
+  .helpOption(false)
+  .action(() => {
+    // Default action
+    runDesigner();
+  });
 
-    // Default action: Run the designer if it exists
-    const designerPath = path.join(process.cwd(), "src", "designer.tsx");
-    if (fs.existsSync(designerPath)) {
-      console.log(chalk.cyan("🎨 Launching tomcs designer..."));
-      const child = spawn("npx", ["tsx", "src/designer.tsx"], {
-        stdio: "inherit",
-        env: { ...process.env, FORCE_COLOR: "true" },
-      });
-      child.on("exit", (code) => {
-        process.exit(code);
-      });
-    } else {
-      printHelp();
-    }
+// COMMAND: designer
+program
+  .command("designer")
+  .description("Launch the visual designer")
+  .action(() => {
+    runDesigner();
   });
 
 // COMMAND: init
@@ -238,7 +246,26 @@ export const GeneratedUI = () => (
     }
 
     console.log(chalk.bold.green("\n✅ Project initialized successfully!"));
-    console.log(chalk.dim("Run 'npx tomcs' to start designing."));
+
+    // 5. Dependency Warning
+    console.log(
+      chalk.bold.yellow("\n⚠️  Action Required: Install Dependencies")
+    );
+    console.log("Tomcs requires default React & Ink dependencies to run.");
+    console.log("Run the following command to install them:\n");
+    console.log(
+      chalk.cyan(
+        "npm install ink react react-dom ink-gradient ink-big-text sharp groq-sdk dotenv tsx import-jsx --save"
+      )
+    );
+    console.log(
+      chalk.cyan(
+        "npm install -D @types/react @types/node typescript --save-dev"
+      )
+    );
+
+    console.log(chalk.dim("\nThen launch the designer with:"));
+    console.log(chalk.white("npx tomcs designer"));
   });
 
 // COMMAND: add [component]
