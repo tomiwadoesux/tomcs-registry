@@ -186,6 +186,42 @@ program
       console.log(chalk.green("✔ Created tomcs.json"));
     }
 
+    // 2.5 Ensure package.json exists and has type: module
+    const packageJsonPath = path.join(projectPath, "package.json");
+    if (!fs.existsSync(packageJsonPath)) {
+      const packageJson = {
+        name: "my-tomcs-app",
+        version: "0.1.0",
+        type: "module",
+        scripts: {
+          dev: "tomcs designer",
+          start: "tsx src/app.tsx",
+        },
+        dependencies: {},
+        devDependencies: {},
+      };
+      await fs.writeJSON(packageJsonPath, packageJson, { spaces: 2 });
+      console.log(chalk.green("✔ Created package.json (type: module)"));
+    } else {
+      // Check if type is module
+      try {
+        const pkg = await fs.readJSON(packageJsonPath);
+        if (pkg.type !== "module") {
+          pkg.type = "module";
+          await fs.writeJSON(packageJsonPath, pkg, { spaces: 2 });
+          console.log(
+            chalk.green("✔ Updated package.json to 'type': 'module'")
+          );
+        }
+      } catch (e) {
+        console.log(
+          chalk.yellow(
+            '⚠️  Could not parse package.json. Please ensure it has "type": "module".'
+          )
+        );
+      }
+    }
+
     // 3. Create src/app.tsx
     const appPath = path.join(projectPath, "src", "app.tsx");
     if (!fs.existsSync(appPath)) {
