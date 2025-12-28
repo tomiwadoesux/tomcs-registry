@@ -1,6 +1,6 @@
 import React, { useContext } from "react";
 import { Box, Text, useInput } from "ink";
-import { FocusContext } from "../../hooks/use-focus";
+import { FocusContext } from "../../hooks/use-focus.js";
 
 interface ButtonProps {
   id?: string;

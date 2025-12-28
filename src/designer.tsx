@@ -70,7 +70,7 @@ interface ComponentItem {
 const autoSavePath = path.join(process.cwd(), "src/app.tsx"); // Target file to sync
 
 const syncToFile = (components: ComponentItem[]) => {
-  const imports = new Set(["Box", "Text", "Shell"]); // Standard imports
+  const imports = new Set(["Shell"]); // Start only with Shell, Box/Text come from ink
 
   // 1. Collect all active bindings
   const bindings = components
@@ -134,8 +134,8 @@ const syncToFile = (components: ComponentItem[]) => {
 
   const fullCode = `import React from 'react';
 import { Box, Text, useStdout } from 'ink';
-import { useTomcsLogic } from './hooks/use-logic';
-import { ${Array.from(imports).join(", ")} } from './components/ui';
+import { useTomcsLogic } from './hooks/use-logic.js';
+import { ${Array.from(imports).join(", ")} } from './components/ui/index.js';
 
 export const GeneratedUI = () => {
   const { stdout } = useStdout();

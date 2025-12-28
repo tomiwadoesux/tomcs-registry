@@ -49,7 +49,9 @@ const DraggableBox = () => {
     };
 
     process.stdin.on("data", onData);
-    return () => process.stdin.off("data", onData);
+    return () => {
+      process.stdin.off("data", onData);
+    };
   }, []);
 
   return (

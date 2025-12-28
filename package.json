@@ -2,10 +2,17 @@
   "name": "tomcs-app",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/app.js",
+  "bin": {
+    "tomcs": "./dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "tsx src/app.tsx"
+    "start": "tsx src/app.tsx",
+    "build": "tsc"
   },
   "keywords": [],
   "author": "",
