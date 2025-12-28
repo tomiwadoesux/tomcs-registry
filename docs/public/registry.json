@@ -22,5 +22,12 @@
     "code": "import React, { useEffect, useState } from \"react\";\nimport { Box, Text, useStdout } from \"ink\";\n\nexport const Shell = ({\n  children,\n  title,\n}: {\n  children: React.ReactNode;\n  title: string;\n}) => {\n  const { stdout } = useStdout();\n  const [size, setSize] = useState({\n    columns: stdout?.columns || 80,\n    rows: stdout?.rows || 24,\n  });\n\n  useEffect(() => {\n    if (!stdout) return;\n\n    const onResize = () => {\n      setSize({\n        columns: stdout.columns,\n        rows: stdout.rows,\n      });\n    };\n\n    stdout.on(\"resize\", onResize);\n    return () => {\n      stdout.off(\"resize\", onResize);\n    };\n  }, [stdout]);\n\n  return (\n    <Box flexDirection=\"column\" width={size.columns} height={size.rows}>\n      {/* HEADER */}\n      <Box backgroundColor=\"blue\" paddingX={1} justifyContent=\"space-between\">\n        <Text bold color=\"white\">\n          {title.toUpperCase()}\n        </Text>\n        <Text color=\"cyan\">{new Date().toLocaleTimeString()}</Text>\n      </Box>\n\n      {/* MAIN CONTENT AREA */}\n      <Box flexGrow={1} padding={1} flexDirection=\"column\">\n        {children}\n      </Box>\n\n      {/* FOOTER / KEYBINDINGS */}\n      <Box\n        borderStyle=\"single\"\n        borderTop={true}\n        borderBottom={false}\n        borderLeft={false}\n        borderRight={false}\n        paddingX={1}\n      >\n        <Text dimColor>q Quit • tab Switch • ↑↓ Navigate</Text>\n      </Box>\n    </Box>\n  );\n};\n",
     "slug": "shell",
     "category": "Basic"
+  },
+  {
+    "name": "banner",
+    "code": "import React from \"react\";\nimport { Text, Box } from \"ink\";\nimport figlet from \"figlet\";\n\nexport const Banner = ({\n  text,\n  font = \"Standard\",\n  color = \"white\",\n}: {\n  text: string;\n  font?: figlet.Fonts;\n  color?: string;\n}) => {\n  const bannerText = figlet.textSync(text, { font });\n\n  return (\n    <Box paddingY={1}>\n      <Text color={color}>{bannerText}</Text>\n    </Box>\n  );\n};\n",
+    "slug": "banner",
+    "category": "Basic",
+    "dependencies": ["figlet", "@types/figlet"]
   }
 ]
