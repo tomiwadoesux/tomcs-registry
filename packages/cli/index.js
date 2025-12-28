@@ -10,7 +10,7 @@ const fetch = require("node-fetch");
 // --- CUSTOM HELP ---
 const printHelp = () => {
   console.log(
-    chalk.bold.cyan("\n  tomcs - The Terminal UNterface Desing Engine\n")
+    chalk.bold.cyan("\n  tomcs - The Terminal User Interface Design Engine\n")
   );
 
   console.log(chalk.bold("  Usage:"));
@@ -96,7 +96,31 @@ if (
 
 const runDesigner = () => {
   const designerPath = path.join(process.cwd(), "src", "designer.tsx");
+
   if (fs.existsSync(designerPath)) {
+    // Dependency Check
+    const inkPath = path.join(process.cwd(), "node_modules", "ink");
+    if (!fs.existsSync(inkPath)) {
+      console.log(chalk.red("\n❌ Dependencies not found!"));
+      console.log(
+        chalk.yellow(
+          "It seems you haven't installed the required packages yet."
+        )
+      );
+      console.log("Please run:\n");
+      console.log(
+        chalk.cyan(
+          "npm install ink react react-dom ink-gradient ink-big-text sharp groq-sdk dotenv tsx import-jsx --save"
+        )
+      );
+      console.log(
+        chalk.cyan(
+          "npm install -D @types/react @types/node typescript --save-dev"
+        )
+      );
+      process.exit(1);
+    }
+
     console.log(chalk.cyan("🎨 Launching tomcs designer..."));
     const child = spawn("npx", ["tsx", "src/designer.tsx"], {
       stdio: "inherit",
