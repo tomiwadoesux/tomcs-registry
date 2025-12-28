@@ -238,7 +238,7 @@ const RenderComponent = ({
   }
 };
 
-const Designer = () => {
+export const Designer = () => {
   const { stdout } = useStdout();
   const [terminalSize, setTerminalSize] = useState({
     width: stdout.columns || 80,
@@ -973,11 +973,16 @@ export const GeneratedUI = () => (
   );
 };
 
-// Enter Alternate Screen Buffer
-process.stdout.write("\x1b[?1049h");
-const { waitUntilExit } = render(<Designer />);
+// Only run if executed directly
+import { fileURLToPath } from "url";
 
-// Restore Main Screen Buffer on exit
-waitUntilExit().then(() => {
-  process.stdout.write("\x1b[?1049l");
-});
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  // Enter Alternate Screen Buffer
+  process.stdout.write("\x1b[?1049h");
+  const { waitUntilExit } = render(<Designer />);
+
+  // Restore Main Screen Buffer on exit
+  waitUntilExit().then(() => {
+    process.stdout.write("\x1b[?1049l");
+  });
+}
