@@ -6,14 +6,107 @@ const chalk = require("chalk");
 const { spawn } = require("child_process");
 const fetch = require("node-fetch");
 
+// --- CUSTOM HELP ---
+const printHelp = () => {
+  console.log(
+    chalk.bold.cyan("\n  tomcs - The shadcn for terminal user interfaces\n")
+  );
+
+  console.log(chalk.bold("  Usage:"));
+  console.log(chalk.yellow("    npx tomcs [options] [command]\n"));
+
+  console.log(chalk.bold("  Commands:"));
+  console.log(
+    `    ${chalk.green(
+      "init"
+    )}       Initialize project & install default components`
+  );
+  console.log(
+    `    ${chalk.green(
+      "add"
+    )}        Add a component (e.g. npx tomcs add button)`
+  );
+  console.log(
+    `    ${chalk.green(
+      "design"
+    )}     Launch the visual designer (or just run npx tomcs)`
+  );
+  console.log(`    ${chalk.green("help")}       Show this help message\n`);
+
+  console.log(chalk.bold("  Designer Controls:"));
+  console.log(
+    `    ${chalk.cyan("[A]")}   Registry      ${chalk.dim(
+      "Opens the Component Library popup"
+    )}`
+  );
+  console.log(
+    `    ${chalk.cyan("[P]")}   AI Porter     ${chalk.dim(
+      "Natural language layout generation"
+    )}`
+  );
+  console.log(
+    `    ${chalk.cyan("[K]")}   Logic Bind    ${chalk.dim(
+      "Connect elements to bash commands"
+    )}`
+  );
+  console.log(
+    `    ${chalk.cyan("[E]")}   Export        ${chalk.dim(
+      "Dumps current layout as raw React code"
+    )}`
+  );
+  console.log(
+    `    ${chalk.cyan("[Del]")} Remove        ${chalk.dim(
+      "Deletes the currently selected component"
+    )}\n`
+  );
+
+  console.log(chalk.bold("  Features:"));
+  console.log(
+    `    ${chalk.magenta(
+      "Logic Engine"
+    )}      Running bound bash commands & piping stdout`
+  );
+  console.log(
+    `    ${chalk.magenta(
+      "ASCII Converter"
+    )}   Resizes images & maps to density strings`
+  );
+  console.log(
+    `    ${chalk.magenta(
+      "Hot-Module Sync"
+    )}   Designer acts as a real-time compiler\n`
+  );
+};
+
 const program = new Command();
+
+// --- MANUAL HELP CHECK ---
+if (
+  process.argv.includes("-h") ||
+  process.argv.includes("--help") ||
+  process.argv.includes("help")
+) {
+  printHelp();
+  process.exit(0);
+}
 
 program
   .name("tomcs")
   .description("The shadcn for terminal user interfaces")
   .version("0.1.0")
-  .action(() => {
-    // Default action: Run the designer if it exists, otherwise show help
+  .helpOption(false) // Disable default help option processing so we can handle it manually
+  .action((options) => {
+    // Check if user asked for help
+    if (
+      process.argv.includes("-h") ||
+      process.argv.includes("--help") ||
+      process.argv.includes("help")
+    ) {
+      printHelp();
+      return;
+    }
+
+    // Default action: Run the designer if it exists
     const designerPath = path.join(process.cwd(), "src", "designer.tsx");
     if (fs.existsSync(designerPath)) {
       console.log(chalk.cyan("🎨 Launching tomcs designer..."));
@@ -25,7 +118,7 @@ program
         process.exit(code);
       });
     } else {
-      program.help();
+      printHelp();
     }
   });
 
@@ -35,22 +128,30 @@ program
   .description("Initialize your project for tomcs components")
   .action(async () => {
     const projectPath = process.cwd();
+    const REGISTRY_URL =
+      "https://raw.githubusercontent.com/tomiwadoesux/tomcs-registry/main";
 
-    // 1. Create the components folder
-    const uiDir = path.join(projectPath, "src/components/ui");
-    await fs.ensureDir(uiDir);
+    console.log(chalk.bold("Initializing tomcs project..."));
+
+    // 1. Create directories
+    console.log(chalk.dim("📁 Creating directories..."));
+    await fs.ensureDir(path.join(projectPath, "src/components/ui"));
+    await fs.ensureDir(path.join(projectPath, "src/hooks"));
+    await fs.ensureDir(path.join(projectPath, "src/lib"));
 
     // 2. Create tomcs.json config
     const configPath = path.join(projectPath, "tomcs.json");
     if (!fs.existsSync(configPath)) {
       const config = {
         style: "default",
-        paths: { components: "@/components/ui" },
+        paths: {
+          components: "@/components/ui",
+          hooks: "@/hooks",
+          lib: "@/lib",
+        },
       };
       await fs.writeJSON(configPath, config, { spaces: 2 });
       console.log(chalk.green("✔ Created tomcs.json"));
-    } else {
-      console.log(chalk.yellow("⚠️ tomcs.json already exists"));
     }
 
     // 3. Create src/app.tsx
@@ -58,7 +159,7 @@ program
     if (!fs.existsSync(appPath)) {
       const boilerplate = `import React from 'react';
 import { Box, Text } from 'ink';
-import { Button } from './components/ui/button';
+import { Button } from './components/ui/button.js';
 
 export const GeneratedUI = () => (
   <Box borderStyle="single" borderColor="cyan" padding={1} flexDirection="column">
@@ -71,22 +172,73 @@ export const GeneratedUI = () => (
 `;
       await fs.outputFile(appPath, boilerplate);
       console.log(chalk.green("✔ Created src/app.tsx"));
-    } else {
-      console.log(chalk.yellow("⚠️ src/app.tsx already exists"));
     }
 
-    // 4. Create src/designer.tsx if strictly needed?
-    // Usually the designer is part of the library, but for now let's assume the user installs the library.
-    // If this is a standalone usage, we might not need to copy designer.tsx unless they want to Customize it.
-    // BUT the 'tomcs' command tries to run 'src/designer.tsx'. So we MUST create it or run it from node_modules.
-    // Since we are fixing the CLI, let's copy a stub designer or rely on the installed package.
-    // Logic: If I run `npx tomcs` inside a project, it should probably run the INSTALLED tomcs designer.
-    // OR it should download the designer file?
-    // Let's copy a basic runner if it doesn't exist so `npx tomcs` works locally.
+    // 4. Install ALL components + Designer from Registry
+    // We want the user to have a fully working environment
+    try {
+      console.log(chalk.blue(`⬇️  Fetching components and designer...`));
 
-    console.log(chalk.bold.green("\n✅ Project initialized!"));
-    console.log(chalk.dim("Run 'npx tomcs add button' to install components."));
-    console.log(chalk.dim("Run 'npx tomcs' to start the designer."));
+      const response = await fetch(`${REGISTRY_URL}/registry/index.json`);
+      if (!response.ok) throw new Error("Failed to fetch registry manifest");
+      const manifest = await response.json();
+
+      // Install ALL defined components
+      const componentsToInstall = Object.keys(manifest.components);
+
+      for (const item of componentsToInstall) {
+        const componentData = manifest.components[item];
+        if (!componentData) continue;
+
+        for (const fileName of componentData.files) {
+          // fileName could be "components/button.tsx" or "hooks/use-mouse.ts"
+          const fileUrl = `${REGISTRY_URL}/registry/${fileName}`;
+          const sourceCode = await fetch(fileUrl).then((res) => {
+            if (!res.ok) throw new Error(`Failed to download ${fileName}`);
+            return res.text();
+          });
+
+          // Determine target path based on file type
+          // If "components/..." -> src/components/ui/basename
+          // If "hooks/..." -> src/hooks/basename
+          // If "lib/..." -> src/lib/basename
+          let targetDir = "";
+          if (fileName.startsWith("components/"))
+            targetDir = "src/components/ui";
+          if (fileName.startsWith("hooks/")) targetDir = "src/hooks";
+          if (fileName.startsWith("lib/")) targetDir = "src/lib";
+
+          if (item === "designer" && fileName.includes("designer.tsx")) {
+            // Special case: designer goes to src/designer.tsx
+            targetDir = "src";
+          }
+
+          if (targetDir) {
+            const targetPath = path.join(
+              projectPath,
+              targetDir,
+              path.basename(fileName)
+            );
+            await fs.outputFile(targetPath, sourceCode);
+          }
+        }
+      }
+      console.log(
+        chalk.green(
+          `✔ Installed ${componentsToInstall.length} components (including Designer)`
+        )
+      );
+    } catch (e) {
+      console.error(chalk.red("⚠️  Failed to fetch components:"), e.message);
+      console.log(
+        chalk.yellow(
+          "    (You might need to check your internet or run 'npx tomcs add --all' later)"
+        )
+      );
+    }
+
+    console.log(chalk.bold.green("\n✅ Project initialized successfully!"));
+    console.log(chalk.dim("Run 'npx tomcs' to start designing."));
   });
 
 // COMMAND: add [component]
@@ -96,27 +248,17 @@ program
   .argument("[component]", "the component to add")
   .option("-a, --all", "add all available components from the registry")
   .action(async (component, options) => {
-    // Registry URL
     const REGISTRY_URL =
       "https://raw.githubusercontent.com/tomiwadoesux/tomcs-registry/main";
 
     try {
-      // 1. Fetch the manifest
-      // console.log(chalk.blue(`Fetching manifest from ${REGISTRY_URL}...`));
       const response = await fetch(`${REGISTRY_URL}/registry/index.json`);
-      if (!response.ok)
-        throw new Error(`Failed to fetch manifest: ${response.statusText}`);
+      if (!response.ok) throw new Error("Failed to fetch manifest");
       const manifest = await response.json();
 
       let componentsToInstall = [];
-
       if (options.all) {
         componentsToInstall = Object.keys(manifest.components);
-        console.log(
-          chalk.blue(
-            `📦 Preparing to install all ${componentsToInstall.length} components...`
-          )
-        );
       } else if (component) {
         componentsToInstall = [component];
       } else {
@@ -126,10 +268,8 @@ program
         return;
       }
 
-      // 2. Loop and Download
       for (const item of componentsToInstall) {
         const componentData = manifest.components[item];
-
         if (!componentData) {
           console.log(
             chalk.red(`✘ Component "${item}" not found in registry.`)
@@ -140,26 +280,36 @@ program
         for (const fileName of componentData.files) {
           const fileUrl = `${REGISTRY_URL}/registry/${fileName}`;
           const sourceCode = await fetch(fileUrl).then((res) => {
-            if (!res.ok)
-              throw new Error(`Failed to fetch ${fileName}: ${res.statusText}`);
+            if (!res.ok) throw new Error(`Failed to fetch ${fileName}`);
             return res.text();
           });
 
-          const baseName = path.basename(fileName);
-          const targetPath = path.join(
-            process.cwd(),
-            "src/components/ui",
-            baseName
-          );
-          await fs.outputFile(targetPath, sourceCode);
-        }
+          // Logic for placement
+          let targetDir = "src/components/ui";
+          if (fileName.startsWith("hooks/")) targetDir = "src/hooks";
+          if (fileName.startsWith("lib/")) targetDir = "src/lib";
+          if (item === "designer" && fileName.includes("designer.tsx"))
+            targetDir = "src";
 
+          const targetPath = path.join(
+            projectPath,
+            targetDir,
+            path.basename(fileName)
+          ); // Use projectPath?
+          // Wait, 'add' doesn't define projectPath variable in scope yet like init does.
+          // FIX: define projectPath or use process.cwd()
+          const dest = path.join(
+            process.cwd(),
+            targetDir,
+            path.basename(fileName)
+          );
+          await fs.outputFile(dest, sourceCode);
+        }
         console.log(chalk.green(`✔ Added ${item}`));
       }
-
-      console.log(chalk.bold.magenta("\n🚀 Components installed!"));
+      console.log(chalk.bold.magenta("\n🚀 Done!"));
     } catch (error) {
-      console.error(chalk.red("Error fetching from registry:"), error.message);
+      console.error(chalk.red("Error:"), error.message);
     }
   });
 

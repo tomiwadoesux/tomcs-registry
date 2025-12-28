@@ -44,6 +44,23 @@
       "name": "Spinner",
       "files": ["components/spinner.tsx"],
       "dependencies": ["ink"]
+    },
+    "designer": {
+      "name": "Designer",
+      "files": [
+        "components/designer.tsx",
+        "hooks/use-mouse.ts",
+        "lib/ascii-converter.ts"
+      ],
+      "dependencies": [
+        "ink",
+        "react",
+        "dotenv",
+        "figlet",
+        "sharp",
+        "groq-sdk",
+        "import-jsx"
+      ]
     }
   }
 }
