@@ -16,10 +16,15 @@ import path from "path";
 import Groq from "groq-sdk";
 import "dotenv/config";
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-  dangerouslyAllowBrowser: true,
-});
+// Helper to get Groq client safely
+const getGroqClient = () => {
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) return null;
+  return new Groq({
+    apiKey,
+    dangerouslyAllowBrowser: true,
+  });
+};
 
 const LAYER_KEYS = [
   "1",
@@ -484,6 +489,15 @@ export const GeneratedUI = () => (
   // --- AI PORTER ---
   const portFromWeb = async (webCode: string) => {
     setMode("INPUT");
+    const groq = getGroqClient();
+
+    if (!groq) {
+      setInputPrompt("Error: GROQ_API_KEY not found in .env");
+      // Wait a bit then reset or let user see error?
+      // User is in INPUT mode, so they see the prompt.
+      return;
+    }
+
     setInputPrompt("Groq is compiling web code to terminal components... ⚡");
 
     const systemPrompt = `You are a visual compiler for the tomcs TUI engine.
