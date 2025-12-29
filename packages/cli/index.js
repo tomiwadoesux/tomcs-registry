@@ -76,10 +76,30 @@ const printHelp = () => {
     )}   Resizes images & maps to density strings`
   );
   console.log(
-    `    ${chalk.magenta(
-      "Hot-Module Sync"
-    )}   Designer acts as a real-time compiler\n`
+    `    ${chalk.magenta()}   Designer acts as a real-time compiler\n`
   );
+
+  console.log(chalk.bold.yellow("  ⚠️  Action Required: Install Dependencies"));
+  console.log("    Tomcs requires default React & Ink dependencies to run.");
+  console.log("    Run the following command to install them:\n");
+  console.log(
+    chalk.cyan(
+      "    npm install ink react react-dom ink-gradient ink-big-text sharp groq-sdk dotenv tsx import-jsx figlet --save"
+    )
+  );
+  console.log(
+    chalk.cyan(
+      "    npm install -D @types/react @types/node @types/figlet typescript --save-dev"
+    )
+  );
+
+  console.log(chalk.bold.yellow("\n  🔑 AI Setup (Optional):"));
+  console.log(
+    "    To use AI features, get a free API key from " +
+      chalk.underline("https://groq.com/groqcloud")
+  );
+  console.log("    Add it to your .env file:");
+  console.log(chalk.cyan("    GROQ_API_KEY=gsk_...\n"));
 };
 
 const program = new Command();
@@ -323,6 +343,14 @@ export const GeneratedUI = () => (
         "npm install -D @types/react @types/node @types/figlet typescript --save-dev"
       )
     );
+
+    console.log(chalk.bold.yellow("\n🔑 AI Setup (Optional):"));
+    console.log(
+      "To use AI features, get a free API key from " +
+        chalk.underline("https://groq.com/groqcloud")
+    );
+    console.log("Add it to your .env file:");
+    console.log(chalk.cyan("GROQ_API_KEY=gsk_..."));
 
     console.log(chalk.dim("\nThen launch the designer with:"));
     console.log(chalk.white("npx tomcs designer"));
