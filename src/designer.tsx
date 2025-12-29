@@ -9,7 +9,8 @@ import { Badge } from "./components/ui/badge.js";
 import { Button } from "./components/ui/button.js";
 import { Card } from "./components/ui/card.js";
 import { Tabs } from "./components/ui/tabs.js";
-import { useMouse } from "./hooks/use-mouse.js";
+// import { useMouse } from "./hooks/use-mouse.js"; // Mouse disabled
+
 import { convertImageToAscii } from "./lib/ascii-converter.js";
 import fs from "fs";
 import path from "path";
@@ -270,11 +271,12 @@ export const Designer = () => {
   const scaleX = canvasAreaWidth / VIRTUAL_WIDTH;
   const scaleY = (terminalSize.height - 10) / VIRTUAL_HEIGHT; // Minus Header
 
-  const mouse = useMouse();
+  // Mouse disabled
+  // const mouse = useMouse();
 
-  useEffect(() => {
-    // Process stdout writes for mouse tracking handles in use-mouse
-  }, []);
+  // useEffect(() => {
+  //   // Process stdout writes for mouse tracking handles in use-mouse
+  // }, []);
 
   const [mode, setMode] = useState<
     | "IDLE"
@@ -364,64 +366,8 @@ export const GeneratedUI = () => (
     setMode("INPUT");
   };
 
-  // --- MOUSE & DRAG LOGIC ---
-  useEffect(() => {
-    if (mouse.action === "down") {
-      const dims = { w: 10, h: 3 }; // Simplified hit testing for layers logic integration?
-      // Actually, let's keep hit testing as is for main canvas
-      // BUT we need to check if user clicked Sidebar?
-      // Sidebar is x < 25.
-      if (mouse.x < 25 && mouse.y > 3) {
-        // Clicked Layer in Sidebar
-        // Estimate index from Y position (header is line 0-2, list starts line 4?)
-        // TODO: precise math
-        return;
-      }
-
-      // Canvas Hit Test
-      // Coordinate transformation needed if we have offsets?
-      // We are using absolute positioning so screen coords ~ canvas coords if no offset
-
-      // Find top-most component
-      for (let i = placedComponents.length - 1; i >= 0; i--) {
-        const c = placedComponents[i];
-        // Simple generic fallback size for hit testing
-        const w = 15,
-          h = 4;
-        if (
-          mouse.x >= c.x &&
-          mouse.x < c.x + w &&
-          mouse.y >= c.y &&
-          mouse.y < c.y + h
-        ) {
-          setSelectedComponent(c.id);
-          setDragOffset({ x: mouse.x - c.x, y: mouse.y - c.y });
-          setMode("DRAGGING");
-          return;
-        }
-      }
-      setSelectedComponent(null);
-      setMode("IDLE");
-    }
-
-    if (mode === "DRAGGING" && mouse.isDown && selectedComponent) {
-      setPlacedComponents((prev) =>
-        prev.map((c) => {
-          if (c.id === selectedComponent) {
-            return {
-              ...c,
-              x: mouse.x - dragOffset.x,
-              y: mouse.y - dragOffset.y,
-            };
-          }
-          return c;
-        })
-      );
-    }
-
-    if (mouse.action === "up" && mode === "DRAGGING") setMode("IDLE");
-    if (mouse.action === "up" && mode === "DRAGGING") setMode("IDLE");
-  }, [mouse]);
+  // --- MOUSE & DRAG LOGIC REMOVED ---
+  // To restore, uncomment import and useMouse usage.
 
   // Sync component changes
   useEffect(() => {
@@ -432,6 +378,8 @@ export const GeneratedUI = () => (
 
   // --- COMPONENT ADDITION ---
   const startAddComponent = (type: string) => {
+    setShowLibrary(false); // Close registry if open
+
     if (type === "image") {
       setPendingComponentType("image");
       setMode("IMAGE_SIZE_PICKER");
