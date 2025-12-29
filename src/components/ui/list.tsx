@@ -5,10 +5,12 @@ export const SelectableList = ({
   items,
   onSelect,
   limit = 8,
+  isActive = true,
 }: {
   items: string[];
   onSelect?: (item: string) => void;
   limit?: number;
+  isActive?: boolean;
 }) => {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [offset, setOffset] = useState(0);
@@ -45,7 +47,7 @@ export const SelectableList = ({
         onSelect(items[selectedIndex]);
       }
     },
-    { isActive: true }
+    { isActive }
   );
 
   const visibleItems = items.slice(offset, offset + limit);
@@ -67,4 +69,3 @@ export const SelectableList = ({
     </Box>
   );
 };
-``;

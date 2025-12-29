@@ -561,16 +561,24 @@ export const GeneratedUI = () => (
       return;
     }
 
+    // Handle Escape for IMAGE modes, but DO NOT return early
+    // so SelectableList can still receive the Enter key
     if (mode === "IMAGE_PICKER" || mode === "IMAGE_SIZE_PICKER") {
       if (key.escape) {
         setMode("IDLE");
         setPendingComponentType(null);
       }
+      // Don't return here - let SelectableList handle Enter
       return;
     }
 
+    // Handle Escape/A for library toggle, but DO NOT return early
+    // so SelectableList can still receive the Enter key for selection
     if (showLibrary) {
-      if (key.escape || input.toLowerCase() === "a") setShowLibrary(false);
+      if (key.escape || input.toLowerCase() === "a") {
+        setShowLibrary(false);
+      }
+      // Don't add other key handlers here - let SelectableList handle Enter
       return;
     }
 
@@ -841,6 +849,7 @@ export const GeneratedUI = () => (
                 Select Size:
               </Text>
               <SelectableList
+                isActive={mode === "IMAGE_SIZE_PICKER"}
                 items={[
                   "Small (20px)",
                   "Medium (40px)",
@@ -888,6 +897,7 @@ export const GeneratedUI = () => (
                 Select Image:
               </Text>
               <SelectableList
+                isActive={mode === "IMAGE_PICKER"}
                 items={imageOptions}
                 onSelect={(item) => {
                   if (item === "Enter Path...") {
@@ -922,6 +932,7 @@ export const GeneratedUI = () => (
                 Component Registry:
               </Text>
               <SelectableList
+                isActive={showLibrary}
                 limit={10}
                 items={[
                   "button",
