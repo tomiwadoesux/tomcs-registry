@@ -32,7 +32,9 @@ export const SelectableList = ({
         return newIndex;
       });
     }
-    if (key.return && onSelect) onSelect(items[selectedIndex]);
+    if ((key.return || input === "\r" || input === "\n") && onSelect) {
+      onSelect(items[selectedIndex]);
+    }
   });
 
   const visibleItems = items.slice(offset, offset + limit);
