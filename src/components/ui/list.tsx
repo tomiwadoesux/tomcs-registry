@@ -48,21 +48,9 @@ export const SelectableList = ({
         });
       }
 
-      // Handle selection with Enter, Space, or Tab
+      // Handle selection with Enter or Space
       if (key.return || input === " ") {
-        console.log(
-          "[SelectableList] Enter/Space pressed! isActive:",
-          isActive,
-          "selectedIndex:",
-          selectedIndex,
-          "item:",
-          items[selectedIndex]
-        );
         if (onSelect && items[selectedIndex]) {
-          console.log(
-            "[SelectableList] Calling onSelect with:",
-            items[selectedIndex]
-          );
           onSelect(items[selectedIndex]);
         }
       }

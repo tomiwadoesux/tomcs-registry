@@ -9,7 +9,8 @@ import { Badge } from "./components/ui/badge.js";
 import { Button } from "./components/ui/button.js";
 import { Card } from "./components/ui/card.js";
 import { Tabs } from "./components/ui/tabs.js";
-import { useMouse } from "./hooks/use-mouse.js";
+// import { useMouse } from "./hooks/use-mouse.js"; // Mouse disabled
+
 import { convertImageToAscii } from "./lib/ascii-converter.js";
 import fs from "fs";
 import path from "path";
@@ -260,6 +261,11 @@ export const Designer = () => {
       setTerminalSize({ width: stdout.columns, height: stdout.rows });
     };
     stdout.on("resize", handleResize);
+
+    // EXPLICITLY DISABLE MOUSE TRACKING ON MOUNT
+    // This cleans up any residual state from previous runs
+    stdout.write("\x1b[?1003l\x1b[?1000l\x1b[?1006l\x1b[?1015l\x1b[?1002l");
+
     return () => {
       stdout.off("resize", handleResize);
     };
@@ -270,11 +276,12 @@ export const Designer = () => {
   const scaleX = canvasAreaWidth / VIRTUAL_WIDTH;
   const scaleY = (terminalSize.height - 10) / VIRTUAL_HEIGHT; // Minus Header
 
-  const mouse = useMouse();
+  // Mouse disabled
+  // const mouse = useMouse();
 
-  useEffect(() => {
-    // Process stdout writes for mouse tracking handles in use-mouse
-  }, []);
+  // useEffect(() => {
+  //   // Process stdout writes for mouse tracking handles in use-mouse
+  // }, []);
 
   const [mode, setMode] = useState<
     | "IDLE"
@@ -364,64 +371,8 @@ export const GeneratedUI = () => (
     setMode("INPUT");
   };
 
-  // --- MOUSE & DRAG LOGIC ---
-  useEffect(() => {
-    if (mouse.action === "down") {
-      const dims = { w: 10, h: 3 }; // Simplified hit testing for layers logic integration?
-      // Actually, let's keep hit testing as is for main canvas
-      // BUT we need to check if user clicked Sidebar?
-      // Sidebar is x < 25.
-      if (mouse.x < 25 && mouse.y > 3) {
-        // Clicked Layer in Sidebar
-        // Estimate index from Y position (header is line 0-2, list starts line 4?)
-        // TODO: precise math
-        return;
-      }
-
-      // Canvas Hit Test
-      // Coordinate transformation needed if we have offsets?
-      // We are using absolute positioning so screen coords ~ canvas coords if no offset
-
-      // Find top-most component
-      for (let i = placedComponents.length - 1; i >= 0; i--) {
-        const c = placedComponents[i];
-        // Simple generic fallback size for hit testing
-        const w = 15,
-          h = 4;
-        if (
-          mouse.x >= c.x &&
-          mouse.x < c.x + w &&
-          mouse.y >= c.y &&
-          mouse.y < c.y + h
-        ) {
-          setSelectedComponent(c.id);
-          setDragOffset({ x: mouse.x - c.x, y: mouse.y - c.y });
-          setMode("DRAGGING");
-          return;
-        }
-      }
-      setSelectedComponent(null);
-      setMode("IDLE");
-    }
-
-    if (mode === "DRAGGING" && mouse.isDown && selectedComponent) {
-      setPlacedComponents((prev) =>
-        prev.map((c) => {
-          if (c.id === selectedComponent) {
-            return {
-              ...c,
-              x: mouse.x - dragOffset.x,
-              y: mouse.y - dragOffset.y,
-            };
-          }
-          return c;
-        })
-      );
-    }
-
-    if (mouse.action === "up" && mode === "DRAGGING") setMode("IDLE");
-    if (mouse.action === "up" && mode === "DRAGGING") setMode("IDLE");
-  }, [mouse]);
+  // --- MOUSE & DRAG LOGIC REMOVED ---
+  // To restore, uncomment import and useMouse usage.
 
   // Sync component changes
   useEffect(() => {
@@ -432,6 +383,8 @@ export const GeneratedUI = () => (
 
   // --- COMPONENT ADDITION ---
   const startAddComponent = (type: string) => {
+    setShowLibrary(false); // Close registry if open
+
     if (type === "image") {
       setPendingComponentType("image");
       setMode("IMAGE_SIZE_PICKER");
@@ -605,19 +558,26 @@ export const GeneratedUI = () => (
         setInputValue((prev) => prev + input);
       }
       return;
-      return;
     }
 
+    // Handle Escape for IMAGE modes - don't block other input
     if (mode === "IMAGE_PICKER" || mode === "IMAGE_SIZE_PICKER") {
       if (key.escape) {
         setMode("IDLE");
         setPendingComponentType(null);
       }
+      // SelectableList handles Enter via its own useInput with isActive prop
+      // Don't process other key handlers when in picker modes
       return;
     }
 
+    // Handle Escape/A for library toggle - don't block other input
     if (showLibrary) {
-      if (key.escape || input.toLowerCase() === "a") setShowLibrary(false);
+      if (key.escape) {
+        setShowLibrary(false);
+      }
+      // SelectableList handles Enter via its own useInput with isActive prop
+      // Don't process other key handlers when library is open
       return;
     }
 
@@ -682,8 +642,8 @@ export const GeneratedUI = () => (
       setSelectedComponent(placedComponents[layerIndex].id);
     }
 
-    // Edit with Enter
-    if (key.return && selectedComponent) {
+    // Edit with Enter - only when not in picker/library modes
+    if (key.return && selectedComponent && !showLibrary && mode === "IDLE") {
       const comp = placedComponents.find((c) => c.id === selectedComponent);
       if (comp) {
         setInputValue(comp.props?.text || comp.props?.title || "");
@@ -854,13 +814,16 @@ export const GeneratedUI = () => (
               position="absolute"
               marginLeft={5}
               marginTop={5}
-              borderStyle="round"
-              borderColor="yellow"
+              borderStyle="double"
+              borderColor="green"
               flexDirection="column"
               padding={1}
               width={60}
               backgroundColor="black"
             >
+              <Text bold color="green">
+                INPUT REQUIRED:
+              </Text>
               <Text bold color="yellow">
                 {inputPrompt}
               </Text>
@@ -885,6 +848,7 @@ export const GeneratedUI = () => (
                 Select Size:
               </Text>
               <SelectableList
+                isActive={mode === "IMAGE_SIZE_PICKER"}
                 items={[
                   "Small (20px)",
                   "Medium (40px)",
@@ -932,6 +896,7 @@ export const GeneratedUI = () => (
                 Select Image:
               </Text>
               <SelectableList
+                isActive={mode === "IMAGE_PICKER"}
                 items={imageOptions}
                 onSelect={(item) => {
                   if (item === "Enter Path...") {
@@ -966,6 +931,7 @@ export const GeneratedUI = () => (
                 Component Registry:
               </Text>
               <SelectableList
+                isActive={showLibrary}
                 limit={10}
                 items={[
                   "button",
@@ -994,10 +960,17 @@ import { fileURLToPath } from "url";
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   // Enter Alternate Screen Buffer
   process.stdout.write("\x1b[?1049h");
+  // DISABLE MOUSE TRACKING IMMEDIATELY
+  process.stdout.write(
+    "\x1b[?1003l\x1b[?1000l\x1b[?1006l\x1b[?1015l\x1b[?1002l"
+  );
+
   const { waitUntilExit } = render(<Designer />);
 
   // Restore Main Screen Buffer on exit
   waitUntilExit().then(() => {
     process.stdout.write("\x1b[?1049l");
+    // Ensure mouse is disabled on exit too, just in case
+    process.stdout.write("\x1b[?1003l\x1b[?1000l");
   });
 }
