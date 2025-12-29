@@ -1,28 +1,17 @@
-import React, {
-  useState,
-  useEffect,
-  useImperativeHandle,
-  forwardRef,
-} from "react";
+import React, { useState, useEffect } from "react";
 import { Box, Text, useInput } from "ink";
 
-export interface SelectableListRef {
-  getSelectedIndex: () => number;
-  getSelectedItem: () => string;
-  selectNext: () => void;
-  selectPrev: () => void;
-  confirmSelection: () => void;
-}
-
-export const SelectableList = forwardRef<
-  SelectableListRef,
-  {
-    items: string[];
-    onSelect?: (item: string) => void;
-    limit?: number;
-    isActive?: boolean;
-  }
->(({ items, onSelect, limit = 8, isActive = true }, ref) => {
+export const SelectableList = ({
+  items,
+  onSelect,
+  limit = 8,
+  isActive = true,
+}: {
+  items: string[];
+  onSelect?: (item: string) => void;
+  limit?: number;
+  isActive?: boolean;
+}) => {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [offset, setOffset] = useState(0);
 
@@ -30,64 +19,52 @@ export const SelectableList = forwardRef<
   useEffect(() => {
     setSelectedIndex(0);
     setOffset(0);
-  }, [items]);
+  }, [items.length]);
 
-  const selectNext = () => {
-    setSelectedIndex((prev) => {
-      const newIndex = Math.min(items.length - 1, prev + 1);
-      if (newIndex >= offset + limit) {
-        setOffset(newIndex - limit + 1);
-      }
-      return newIndex;
-    });
-  };
-
-  const selectPrev = () => {
-    setSelectedIndex((prev) => {
-      const newIndex = Math.max(0, prev - 1);
-      if (newIndex < offset) {
-        setOffset(newIndex);
-      }
-      return newIndex;
-    });
-  };
-
-  const confirmSelection = () => {
-    if (onSelect && items[selectedIndex]) {
-      onSelect(items[selectedIndex]);
-    }
-  };
-
-  // Expose methods to parent via ref
-  useImperativeHandle(ref, () => ({
-    getSelectedIndex: () => selectedIndex,
-    getSelectedItem: () => items[selectedIndex],
-    selectNext,
-    selectPrev,
-    confirmSelection,
-  }));
-
-  // Handle keyboard input when active
   useInput(
     (input, key) => {
-      if (!isActive) return;
+      // Only process input if active
+      if (!isActive) {
+        return;
+      }
 
       if (key.upArrow) {
-        selectPrev();
-      }
-      if (key.downArrow) {
-        selectNext();
+        setSelectedIndex((prev) => {
+          const newIndex = Math.max(0, prev - 1);
+          if (newIndex < offset) {
+            setOffset(newIndex);
+          }
+          return newIndex;
+        });
       }
 
-      if (
-        (key.return ||
-          key.tab ||
-          input === "\r" ||
-          input === "\n" ||
-          input === " ") &&
-        onSelect
-      ) {
-        confirmSelection();
+      if (key.downArrow) {
+        setSelectedIndex((prev) => {
+          const newIndex = Math.min(items.length - 1, prev + 1);
+          if (newIndex >= offset + limit) {
+            setOffset(newIndex - limit + 1);
+          }
+          return newIndex;
+        });
+      }
+
+      // Handle selection with Enter, Space, or Tab
+      if (key.return || input === " ") {
+        console.log(
+          "[SelectableList] Enter/Space pressed! isActive:",
+          isActive,
+          "selectedIndex:",
+          selectedIndex,
+          "item:",
+          items[selectedIndex]
+        );
+        if (onSelect && items[selectedIndex]) {
+          console.log(
+            "[SelectableList] Calling onSelect with:",
+            items[selectedIndex]
+          );
+          onSelect(items[selectedIndex]);
+        }
       }
     },
     { isActive }
@@ -103,7 +80,7 @@ export const SelectableList = forwardRef<
         const isSelected = globalIndex === selectedIndex;
         return (
           <Text
-            key={`${item}-${globalIndex}`}
+            key={`list-item-${globalIndex}`}
             color={isSelected ? "cyan" : "white"}
           >
             {isSelected ? "❯ " : "  "}
@@ -114,6 +91,4 @@ export const SelectableList = forwardRef<
       {offset + limit < items.length && <Text dimColor>↓ more</Text>}
     </Box>
   );
-});
-
-SelectableList.displayName = "SelectableList";
+};
