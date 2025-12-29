@@ -261,6 +261,11 @@ export const Designer = () => {
       setTerminalSize({ width: stdout.columns, height: stdout.rows });
     };
     stdout.on("resize", handleResize);
+
+    // EXPLICITLY DISABLE MOUSE TRACKING ON MOUNT
+    // This cleans up any residual state from previous runs
+    stdout.write("\x1b[?1003l\x1b[?1000l\x1b[?1006l\x1b[?1015l\x1b[?1002l");
+
     return () => {
       stdout.off("resize", handleResize);
     };
@@ -802,13 +807,16 @@ export const GeneratedUI = () => (
               position="absolute"
               marginLeft={5}
               marginTop={5}
-              borderStyle="round"
-              borderColor="yellow"
+              borderStyle="double"
+              borderColor="green"
               flexDirection="column"
               padding={1}
               width={60}
               backgroundColor="black"
             >
+              <Text bold color="green">
+                INPUT REQUIRED:
+              </Text>
               <Text bold color="yellow">
                 {inputPrompt}
               </Text>
@@ -942,10 +950,17 @@ import { fileURLToPath } from "url";
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   // Enter Alternate Screen Buffer
   process.stdout.write("\x1b[?1049h");
+  // DISABLE MOUSE TRACKING IMMEDIATELY
+  process.stdout.write(
+    "\x1b[?1003l\x1b[?1000l\x1b[?1006l\x1b[?1015l\x1b[?1002l"
+  );
+
   const { waitUntilExit } = render(<Designer />);
 
   // Restore Main Screen Buffer on exit
   waitUntilExit().then(() => {
     process.stdout.write("\x1b[?1049l");
+    // Ensure mouse is disabled on exit too, just in case
+    process.stdout.write("\x1b[?1003l\x1b[?1000l");
   });
 }
