@@ -558,27 +558,26 @@ export const GeneratedUI = () => (
         setInputValue((prev) => prev + input);
       }
       return;
-      return;
     }
 
-    // Handle Escape for IMAGE modes, but DO NOT return early
-    // so SelectableList can still receive the Enter key
+    // Handle Escape for IMAGE modes - don't block other input
     if (mode === "IMAGE_PICKER" || mode === "IMAGE_SIZE_PICKER") {
       if (key.escape) {
         setMode("IDLE");
         setPendingComponentType(null);
       }
-      // Don't return here - let SelectableList handle Enter
+      // SelectableList handles Enter via its own useInput with isActive prop
+      // Don't process other key handlers when in picker modes
       return;
     }
 
-    // Handle Escape/A for library toggle, but DO NOT return early
-    // so SelectableList can still receive the Enter key for selection
+    // Handle Escape/A for library toggle - don't block other input
     if (showLibrary) {
-      if (key.escape || input.toLowerCase() === "a") {
+      if (key.escape) {
         setShowLibrary(false);
       }
-      // Don't add other key handlers here - let SelectableList handle Enter
+      // SelectableList handles Enter via its own useInput with isActive prop
+      // Don't process other key handlers when library is open
       return;
     }
 
@@ -643,8 +642,8 @@ export const GeneratedUI = () => (
       setSelectedComponent(placedComponents[layerIndex].id);
     }
 
-    // Edit with Enter
-    if (key.return && selectedComponent) {
+    // Edit with Enter - only when not in picker/library modes
+    if (key.return && selectedComponent && !showLibrary && mode === "IDLE") {
       const comp = placedComponents.find((c) => c.id === selectedComponent);
       if (comp) {
         setInputValue(comp.props?.text || comp.props?.title || "");
